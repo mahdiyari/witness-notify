@@ -8,3 +8,6 @@ you must change cronjob-1minute.php (channels name,channels id,user,password,bot
 you must change cronjob-24hour.php (Server URL)<br>
 <br>
 Create Cronjobs for running cronjob-1minute.php every minutes and cronjob-24hour.php every 24 hours (Daily)
+
+#### Run:
+First Run cronjob-24hour.php manually for adding witnesses to database.
