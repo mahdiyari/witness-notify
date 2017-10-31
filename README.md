@@ -3,7 +3,7 @@ Created by [@mahdiyari](https://steemit.com/@mahdiyari) for Sending Notification
 ***
 #### Install:
 You must Change database.php file and Import database.sql to your database.<br>
-You must change index.js and run it on a VPS or etc. (nodejs)<br>
+You must change nodejs/index.js and run it on a VPS or etc. (nodejs)<br>
 you must change cronjob-1minute.php (channels name,channels id,user,password,bot token,Server URL)<br>
 you must change cronjob-24hour.php (Server URL)<br>
 <br>
