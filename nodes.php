@@ -11,7 +11,15 @@ $node;
 		if($result == false || $result == null || $result == ''){
 			return 0;
 		}else{
-			return 1;
+			try{	
+				if(json_decode($result)->id == 1){
+					return 1;
+				}else{
+					return 0;
+				}
+			}catch(Exception $e){
+				return 0;
+			}
 		}
 		curl_close($ch);
 	}
