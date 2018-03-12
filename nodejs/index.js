@@ -1,117 +1,184 @@
-const Eris = require("eris"); //Discord Bot
-const http = require('http'); //Running on a Port
+
 const steem = require('steem'); //Steem Lib
 var request = require('request'); //sending Post Request
-var url = require('url'); //Get params From URL
+var mysql = require('mysql');
+var cloudscraper = require('cloudscraper');
+const Eris = require("eris"); //Discord Bot
 
-const hostname = '0.0.0.0';
-const port = 444; // Script Will Listen to This Port 
-var bot = new Eris("Token Here"); //Discord Bot Token
+var con = mysql.createConnection({host: "127.0.0.1",user: "user",password: "1234",database: "witnesses"});
+steem.api.setOptions({ url: 'ws://NODE' });
 
-var channelid='Spicific Discord Channel ID for Sending Message'; // Change it
-var channel-name = '#witness-blocks'; // Channel name in steemit.chat
+steem.api.streamBlockNumber(function (err1, newestblock) {
+    console.log(newestblock);
+});
 
-var username = 'witness-notify'; // Steemit.chat Bot
-var password = 'Super Secret Password'; // Steemit.chat Bot's Password
 
-const server = http.createServer((req, res) => { // create Server
-		var params = url.parse(req.url,true).query;
-		var type;
-		var block;
-		var miss;
-		var uname;
-		var user;
-		var userid;
-		var mention;
-		if(params.id == 1){ // Return top 200 Witnesses List
-			res.statusCode = 200;
-			res.setHeader('Content-Type', 'application/json');
-			var last;
-			var out={};
-			var output=[];
-			steem.api.getWitnessesByVote('', 100, function(err, result) { //Get First 100 Witnesses (1-100)
-				last = result[99].owner;
-				var k =0;
-				for(i in result){
-					output[k] = {'owner':result[i].owner,'miss':result[i].total_missed,'last_confirm':result[i].last_confirmed_block_num};
-					k =k+1;
+//discord
+var bot = new Eris("discord_token"); //Discord Bot Token
+var channelid='discord_channel_id'; // Change it
+
+//steemit.chat
+var channelname = '#witness-blocks'; // Channel name in steemit.chat
+var botname = 'Username'; // Steemit.chat Bot
+var botpass = '1234'; // Steemit.chat Bot's Password
+
+function getallwitnesses(){
+	steem.api.getWitnessesByVote('', 100, function(err, result) { //Get First 100 Witnesses (1-100)
+		var last = result[99].owner;
+		for(i in result){
+			add(result[i].owner,result[i].total_missed);
+		}
+		steem.api.getWitnessesByVote(last, 100, function(err, result) { // Get Second 100 Witnesses (100-200)
+			for(i in result){
+				add(result[i].owner,result[i].total_missed);
+			}
+		});
+	});
+	return 1;
+}
+
+getallwitnesses();
+
+setInterval(function(){ //add new witnesses to database
+	getallwitnesses();
+},43200000);
+
+function add(witness,total_missed){ //checking and adding
+	con.query('SELECT EXISTS(SELECT * FROM `witnesses` WHERE `user`="'+witness+'")', function (error, results, fields) {	
+		for(k in results){
+			for(j in results[k]){
+				var x = results[k][j];
+				if(x == 0){
+					con.query('INSERT INTO `witnesses`(`user`,`totalmiss`) VALUES ("'+witness+'","'+total_missed+'")', function (error, results, fields) {
+					});
 				}
-				steem.api.getWitnessesByVote(last, 100, function(err, result) { // Get Second 100 Witnesses (100-200)
-					for(i in result){
-						output[k] = {'owner':result[i].owner,'miss':result[i].total_missed,'last_confirm':result[i].last_confirmed_block_num};
-						k =k+1;
-					}
-					setTimeout(function(){res.end(JSON.stringify(output));},1000);
-				});
-			});
-			
-			
-		}else if(params.id == 2){ // Send Message to Steemit.chat
-			if(params){
-				user = params.u;
-				uname = params.uname;
-				type = params.type;
-				block = params.block;
-				miss = params.miss;
-			}
-			if(uname != 0 && uname != null && uname != undefined){
-				mention = '@'+uname;
-			}else{
-				mention = '';
-			}
-			res.statusCode = 200;
-			res.setHeader('Content-Type', 'text/html');
-			var time = new Date();
-			
-				var token;
-				var userid;
-				var options = {url: 'https://steemit.chat/api/v1/login/',method: 'POST',form: {'user':username,'password':password}}
-				request(options, function (error, response, body) {
-					if (!error && response.statusCode == 200) {
-						// Print out the response body
-						var bod = JSON.parse(body);
-						token = bod['data'].authToken;
-						userid = bod['data'].userId;
-						var headers = {'X-Auth-Token': token,'X-User-Id': userid,'Content-type': 'application/json'};
-						if(type ==1){
-							msg = mention+' Witness '+user+' Missed a Block. Total Miss= '+miss+'. '+time;
-						}else{
-							msg = mention+' Witness '+user+' Recovered on block \#'+block+'. Total Miss= '+miss;
-						}
-						var options1 = {url: 'https://steemit.chat/api/v1/chat.postMessage/',method: 'POST',headers: headers,form: {"channel": channel-name, "text": msg}};
-						request(options1, function (error, response, body) {
-							res.end('1');
-						});
-					}
-				});
-	
-		}else{ // Send Message to Discord channel
-			if(params){
-				user = params.u;
-				userid = params.id;
-				type = params.type;
-				block = params.block;
-			}
-			if(userid != 0 && userid != null && userid != undefined){
-				mention = '<@'+userid+'>';
-			}else{
-				mention = '';
-			}
-			res.statusCode = 200;
-			res.setHeader('Content-Type', 'text/html');
-			var time = new Date();
-			if(type == 1){
-				setTimeout(function(){bot.createMessage(channelid,mention+' Witness @'+user+' Missed a Block. '+time)},1000);
-				res.end('done');
-			}else if(type == 2){
-				setTimeout(function(){bot.createMessage(channelid,mention+' Witness @'+user+' Recovered on block \#'+block)},1000);
-				res.end('done');
 			}
 		}
-});
+	});
+	
+	return 1;
+}
 
-bot.connect(); 
+setInterval(function(){//checking for missed blocks or recovered blocks
+	con.query('SELECT EXISTS(SELECT * FROM `witnesses`)', function (error, results, fields) {
+		for(k in results){
+			for(j in results[k]){
+				var x = results[k][j];
+				if(x == 1){
+					con.query('SELECT * FROM `witnesses`', function (error, results, fields) {
+						if(!error){
+							for(i in results){
+								var witness = results[i].user;
+								var mention = results[i].mention;
+								var totalmiss = results[i].totalmiss;
+								var lastconfirm = results[i].lastconfirm;
+								var missed = results[i].missed;
+								if(mention == 1){
+									var username = results[i].username;
+								}else{
+									var username = 0;
+								}
+								check(witness,mention,totalmiss,lastconfirm,missed,username);
+							}
+						}
+					});
+				}
+			}
+		}
+	});
+},120000);
 
-server.listen(port, hostname, () => {
-	console.log(`Server running at http://${hostname}:${port}/`);
-});
+var delay = 0;
+function check(witness,mention,totalmiss,lastconfirm,missed,username){ //checking function
+	delay = delay+1;
+	setTimeout(function(){
+		steem.api.getWitnessByAccount(witness, function(err, result) {
+			if(!err && result){
+				if(result.total_missed > totalmiss){
+					var newmissed = result.total_missed - totalmiss;
+					printmissed(witness,mention,username,result.total_missed,result.last_confirmed_block_num,newmissed);
+				}else if(missed == 1){
+					if(result.last_confirmed_block_num > lastconfirm){
+						printrecovered(witness,mention,username,result.last_confirmed_block_num,result.total_missed);
+					}
+				}
+			}
+			
+		});
+		delay=delay-1;
+	},100*delay);
+	return 1;
+}
+
+function printmissed(witness,mention,username,total_missed,last_confirmed,newmissed){ // printing missed blocks
+	var d = new Date();
+	var time = d.getFullYear()+'-'+parseInt(d.getMonth()+1)+'-'+d.getDate()+' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()+' (UTC)';
+	var token;
+	var userid;
+	if(mention){
+		var ment = '@'+username;
+	}else{
+		var ment = '';
+	}
+	var options = {url: 'https://steemit.chat/api/v1/login/',method: 'POST',form: {'user':botname,'password':botpass}}
+	cloudscraper.request(options, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			// Print out the response body
+			var bod = JSON.parse(body);
+			token = bod['data'].authToken;
+			userid = bod['data'].userId;
+			var headers = {'X-Auth-Token': token,'X-User-Id': userid,'Content-type': 'application/json'};
+			var msg = ment+' Witness '+witness+' missed '+newmissed+' block. total miss= '+total_missed+'. '+time;
+			var msg1 = 'Witness '+witness+' missed '+newmissed+' block. total miss= '+total_missed+'. '+time;
+			var options1 = {url: 'https://steemit.chat/api/v1/chat.postMessage/',method: 'POST',headers: headers,form: {"channel": channelname, "text": msg}};
+			cloudscraper.request(options1, function (error, response, body) {
+				con.query('UPDATE `witnesses` SET `totalmiss`="'+total_missed+'" ,`missed`="1",`lastconfirm`="'+last_confirmed+'" WHERE `user`="'+witness+'"', function (error, results, fields) {
+				});
+				//send message in discord
+				setTimeout(function(){bot.createMessage(channelid,msg1)},1000);
+			});
+			
+		}
+	});
+	
+	return 1;
+}
+
+function printrecovered(witness,mention,username,last_confirmed,total_missed){ //print recovered blocks
+	var d = new Date();
+	var time = d.getFullYear()+'-'+parseInt(d.getMonth()+1)+'-'+d.getDate()+' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()+' (UTC)';
+	var token;
+	var userid;
+	if(mention){
+		var ment = '@'+username;
+	}else{
+		var ment = '';
+	}
+	var options = {url: 'https://steemit.chat/api/v1/login/',method: 'POST',form: {'user':botname,'password':botpass}}
+	cloudscraper.request(options, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			// Print out the response body
+			var bod = JSON.parse(body);
+			token = bod['data'].authToken;
+			userid = bod['data'].userId;
+			var headers = {'X-Auth-Token': token,'X-User-Id': userid,'Content-type': 'application/json'};
+			var msg = ment+' Witness '+witness+' recovered on block '+last_confirmed+', total miss= '+total_missed+'. '+time;
+			var msg1 = 'Witness '+witness+' recovered on block '+last_confirmed+', total miss= '+total_missed+'. '+time;
+			var options1 = {url: 'https://steemit.chat/api/v1/chat.postMessage/',method: 'POST',headers: headers,form: {"channel": channelname, "text": msg}};
+			cloudscraper.request(options1, function (error, response, body) {
+				con.query('UPDATE `witnesses` SET `missed`="0", `totalmiss`="'+total_missed+'" WHERE `user`="'+witness+'"', function (error, results, fields) {
+				});
+				//send message in discord
+				setTimeout(function(){bot.createMessage(channelid,msg1)},1000);
+			});
+		}
+	});
+	
+	return 1;
+}
+
+bot.connect(); //discord bot connect
+
+setInterval(function () { //keep connection alive
+	con.query('SELECT 1', function (error, results, fields) {});
+}, 5000);
