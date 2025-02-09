@@ -1,2 +1,12 @@
 # witness-notify
-Created by [@mahdiyari](https://steemit.com/@mahdiyari) for Sending Notification for Missed Blocks to [Discord Channel](https://discord.gg/QfRpwte) and [#witness-blocks](https://steemit.chat/channel/witness-blocks) Channel in steemit.chat
+Sends notifications for missed blocks to [#witness-blocks](https://openhive.chat/channel/witness-blocks) channel on openhive.chat
+
+# Development
+```sh
+deno run dev
+# OR
+deno run start
+```
+OR
+
+Use docker
