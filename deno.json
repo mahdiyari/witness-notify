@@ -5,7 +5,7 @@
 		"dev": "deno run --allow-env --allow-read --allow-net --env-file --watch src/main.ts"
 	},
 	"imports": {
-		"hive-tx": "npm:hive-tx@^6.0.1"
+		"hive-tx": "npm:hive-tx@^6.0.4"
 	},
 	"fmt": {
 		"indentWidth": 2,

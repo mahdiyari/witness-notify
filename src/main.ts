@@ -13,16 +13,14 @@ const main = async () => {
 		for (let i = 0; i < ops.length; i++) {
 			const op = ops[i].op
 			if (op[0] === 'producer_missed') {
-				printMissed(op[1].producer)
+				await printMissed(op[1].producer)
 			}
 			if (op[0] === 'producer_reward') {
-				printRecovered(op[1].producer, headBlock)
+				await printRecovered(op[1].producer, headBlock)
 			}
 		}
 	}
 }
-setInterval(main, 1000)
-console.log('Application started.')
 
 let lastBlock = 0
 const getHeadBlock = async () => {
@@ -90,3 +88,6 @@ const sendMessage = (message: OpenHiveMessage) => {
 		console.error('Failed to deliver message', e)
 	})
 }
+
+setInterval(main, 1000)
+console.log('Application started.')

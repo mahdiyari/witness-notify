@@ -1,7 +1,7 @@
 {
   "version": "4",
   "specifiers": {
-    "npm:hive-tx@^6.0.1": "6.0.1"
+    "npm:hive-tx@^6.0.4": "6.0.4"
   },
   "npm": {
     "@noble/ciphers@1.2.1": {
@@ -56,8 +56,8 @@
         "mime-types"
       ]
     },
-    "hive-tx@6.0.1": {
-      "integrity": "sha512-yhRoTuaEkUGMV+Zz7pZ1xAUMHo2s4nJgf+JBnyW1RHJMcORLDfSsObaV0fDbGu0mLdETSo9Iq4JqGdMnBwdDpQ==",
+    "hive-tx@6.0.4": {
+      "integrity": "sha512-4cbt5yOBfNZmuT5uQ+Kj62D94uCv8N1z/kQZrAnnV4ru/lwZVkeKmtoxWf+8jJYFcYRUZD8xzB3QrzG9/oO18w==",
       "dependencies": [
         "@noble/ciphers",
         "@noble/curves",
@@ -81,7 +81,7 @@
   },
   "workspace": {
     "dependencies": [
-      "npm:hive-tx@^6.0.1"
+      "npm:hive-tx@^6.0.4"
     ]
   }
 }
