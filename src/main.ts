@@ -25,7 +25,10 @@ const main = async () => {
 let lastBlock = 0
 const getHeadBlock = async () => {
 	const result = await call('condenser_api.get_dynamic_global_properties')
-	if (result.result.head_block_number > lastBlock) {
+	if (
+		result?.result?.head_block_number &&
+		result.result.head_block_number > lastBlock
+	) {
 		lastBlock = result.result.head_block_number
 		return lastBlock
 	} else {
@@ -35,7 +38,10 @@ const getHeadBlock = async () => {
 
 const getOpsInBlock = async (blockNum: number): Promise<OpInBlock[]> => {
 	const result = await call('condenser_api.get_ops_in_block', [blockNum, true])
-	return result.result
+	if (result?.result) {
+		return result.result
+	}
+	return []
 }
 
 const recentlyMissedWitnesses: string[] = []
